@@ -222,7 +222,7 @@ local function TaxiNodeOnButtonEnter(button)
 	local numRoutes = GetNumRoutes(index)
 	local type = TaxiNodeGetType(index)
 	
-	if type == 'REACHABLE' or type == 'CURRENT' then
+	if type == 'REACHABLE' then
 		HideAllLines()
 		
 		for slot, button in pairs(TaxiButtons) do -- hide nodes we can't fly to
@@ -260,7 +260,6 @@ local function TaxiNodeOnButtonEnter(button)
 		end
 	elseif ( type == "CURRENT" ) then
 		WorldMapTooltip:AddLine(TAXINODEYOUAREHERE, 1.0, 1.0, 1.0, true)
-		DrawOneHopLines()
 	end
 
 	WorldMapTooltip:Show()
