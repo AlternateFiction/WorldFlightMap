@@ -392,12 +392,19 @@ function f:WORLD_MAP_UPDATE()
 			end
 			
 			if node.type == 'REACHABLE' or node.type == 'CURRENT' then
+				-- increase flight point node size in zones
+				local size = isZone and 20 or 16
+				button:SetSize(size, size)
+				local hlTex = button:GetHighlightTexture()
+				if hlTex then
+					hlTex:SetSize(size*2, size*2)
+				end
+
 				button:Show()
 				visibleNodes[node.name] = true
 			else
 				button:Hide()
 			end
-			
 			
 			j = j + 1
 		end
