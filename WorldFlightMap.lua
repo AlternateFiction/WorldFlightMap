@@ -113,6 +113,13 @@ local function GetLine()
 	return CreateLine()
 end
 
+local function HideAllLines()
+	for i,line in ipairs(lines) do
+		line:Hide()
+	end
+	return
+end
+
 --local function DrawLine(x1,y1,x2,y2,r,g,b,a)
 local function DrawLine(button1, button2, r, g, b, a)
 	local line = GetLine()
@@ -216,9 +223,7 @@ local function TaxiNodeOnButtonEnter(button)
 	local type = TaxiNodeGetType(index)
 	
 	if type == 'REACHABLE' or type == 'CURRENT' then
-		for i = 1, #lines do
-			lines[i]:Hide()
-		end
+		HideAllLines()
 		
 		for slot, button in pairs(TaxiButtons) do -- hide nodes we can't fly to
 			if TaxiNodeGetType(slot) == 'DISTANT' then
@@ -261,6 +266,14 @@ local function TaxiNodeOnButtonEnter(button)
 	WorldMapTooltip:Show()
 end
 
+local function TaxiNodeOnButtonLeave(button)
+	WorldMapTooltip:Hide()
+	HideAllLines()
+	if showOneHops then
+		DrawOneHopLines()
+	end
+end
+
 
 local function BounceAnimation(self) -- SetLooping('BOUNCE') is producing broken animations, so we're just simulating what it's supposed to do
 	local tx, parent, bounce = self.tx, self.parent, self.bounce
@@ -295,7 +308,7 @@ local function CreateButton(i)
 	TaxiButtons[i] = button
 	
 	button:SetScript('OnEnter', TaxiNodeOnButtonEnter)
-	button:SetScript('OnLeave', function() WorldMapTooltip:Hide() end)
+	button:SetScript('OnLeave', TaxiNodeOnButtonLeave)
 	
 	local tx = button:CreateTexture(nil, 'OVERLAY')
 	tx:SetPoint('BOTTOM', button, 'TOP')
@@ -344,10 +357,9 @@ function f:WORLD_MAP_UPDATE()
 	local continent = FlightmapCoordinates[continentID]
 	local left, top, right, bottom, width, height, mapID = GetMapSize()
 	
+	-- only hide lines if the map has changed to a new map when this event fired
 	if mapID ~= CurrentMap or not mapID then
-		for i = 1, #lines do -- only hide lines if the map has changed to a new map when this event fired
-			lines[i]:Hide()
-		end
+		HideAllLines()
 		CurrentMap = mapID
 	end
 	
