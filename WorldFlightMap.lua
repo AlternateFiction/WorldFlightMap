@@ -1,3 +1,16 @@
+-- Customizable settings
+
+-- draw lines to the nearest flight points from where you are
+local showOneHops = false
+-- display arrows highlighting available flight path nodes
+local showArrows = false
+
+-------------------------------------------------------------------------------
+-- Don't edit below this line!
+-------------------------------------------------------------------------------
+
+
+
 local FlightmapCoordinates = { -- fairly accurate sizes for the different flight maps, these were calculated using very special maths and things
 	[1] = { -- Kalimdor
 		left = 10970,
@@ -345,7 +358,7 @@ function f:WORLD_MAP_UPDATE()
 		return
 	end
 	
-	local showArrows = ContinentMaps[continentID] and GetCurrentMapAreaID() ~= ContinentMaps[continentID] -- only show arrows on zone maps
+	local isZone = ContinentMaps[continentID] and GetCurrentMapAreaID() ~= ContinentMaps[continentID]
 	
 	local j = 1
 	for i = 1, #taxiNodePositions do
@@ -361,7 +374,7 @@ function f:WORLD_MAP_UPDATE()
 			--button:SetID(node.slotIndex)
 
 			if node.type == 'REACHABLE' then
-				button.arrow:SetShown(showArrows)
+				button.arrow:SetShown(isZone and showArrows) -- only show arrows on zone maps
 			else
 				button.arrow:Hide()
 			end
@@ -380,8 +393,8 @@ function f:WORLD_MAP_UPDATE()
 	for i = j, #TaxiButtons do -- hide extra buttons
 		TaxiButtons[i]:Hide()
 	end
-	
-	if not showArrows then
+
+	if showOneHops then
 		DrawOneHopLines()
 	end
 end
