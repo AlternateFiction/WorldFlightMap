@@ -371,6 +371,7 @@ function f:WORLD_MAP_UPDATE()
 	
 	local isZone = ContinentMaps[continentID] and GetCurrentMapAreaID() ~= ContinentMaps[continentID]
 	
+	local visibleNodes = {}
 	local j = 1
 	for i = 1, #taxiNodePositions do
 		local node = taxiNodePositions[i]
@@ -392,6 +393,7 @@ function f:WORLD_MAP_UPDATE()
 			
 			if node.type == 'REACHABLE' or node.type == 'CURRENT' then
 				button:Show()
+				visibleNodes[node.name] = true
 			else
 				button:Hide()
 			end
@@ -403,6 +405,13 @@ function f:WORLD_MAP_UPDATE()
 
 	for i = j, #TaxiButtons do -- hide extra buttons
 		TaxiButtons[i]:Hide()
+	end
+
+	-- Hide default POI flight point markers
+	for _, poi in ipairs({WorldMapPOIFrame:GetChildren()}) do
+		if poi.landmarkType and poi.landmarkType == 5 then
+			poi:SetAlpha(visibleNodes[poi.name] and 0 or 1) -- if usable FP node exists, hide default FP marker
+		end
 	end
 
 	if showOneHops then
