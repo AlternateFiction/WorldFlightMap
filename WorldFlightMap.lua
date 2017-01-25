@@ -210,6 +210,58 @@ local function DrawOneHopLines()
 end
 
 
+local function ShortenName(name)  -- shorten name to lighten saved vars and display
+	return gsub(name, ", (.+)", "") -- removes main zone name, leaving only subzone
+end
+
+local function GetStoredInFlightTime(srcId, dstId)
+	local time
+	local t = InFlightVars and InFlightVars[UnitFactionGroup("player")]
+	if t then
+		local src = ShortenName(TaxiNodeName(srcId))
+		local dst = ShortenName(TaxiNodeName(dstId))
+		time = t[src] and t[src][dst]
+		if time then
+			if GetGuildLevel and GetGuildLevel() >= 21 then
+				time = time / 1.25
+			end
+		end
+	end
+	return time
+end
+
+local function GetEstimatedTime(srcId, dstId)
+	for i = 2, GetNumRoutes(dstId) do
+		local connectId = TaxiGetNodeSlot(dstId, i, true)
+
+		local t1 = GetStoredInFlightTime(srcId, connectId)
+		if t1 then
+			local t2 = GetStoredInFlightTime(connectId, dstId)
+			if t2 then
+				-- return combined times with some adjustment for the extra start & landing time
+				return t1 + t2 - 2
+			end
+		end
+	end
+	return
+end
+
+local function GetEstimatedFlightTime(srcId, dstId)
+	if InFlightVars then
+		return GetStoredInFlightTime(srcId, dstId) or GetEstimatedTime(srcId, dstId) or 0
+	else
+		return -1
+	end
+end
+
+local function FormatTime(seconds)
+	if seconds > 0 then
+		return format("|cffffffff%d:%02d", seconds / 60, seconds % 60)
+	else
+		return "|cff909090-:--"
+	end
+end
+
 
 local GetButton
 
@@ -237,9 +289,28 @@ local function TaxiNodeOnButtonEnter(button)
 	end
 	
 	if ( type == "REACHABLE" ) then
+		local startNode, endNode = TaxiGetNodeSlot(index, 1, true), index
+		local estTime = GetEstimatedFlightTime(startNode, endNode)
 		local cost = TaxiNodeCost(button:GetID())
 		if cost ~= 0 then
+			-- add cost to tooltip
 			SetTooltipMoney(WorldMapTooltip, cost)
+
+			-- add estimated flight time to tooltip
+			if estTime ~= -1 then
+				WorldMapTooltipTextRight2:SetText(FormatTime(estTime))
+				WorldMapTooltipTextRight2:Show()
+
+				if WorldMapTooltipMoneyFrame1 then
+					local minWidth = WorldMapTooltipMoneyFrame1:GetWidth() + WorldMapTooltipTextRight2:GetWidth()
+					if WorldMapTooltip:GetMinimumWidth() < minWidth then
+						WorldMapTooltip:SetMinimumWidth(minWidth)
+					end
+				end
+			end
+		elseif estTime ~= -1 then
+			-- add estimated flight time to tooltip
+			WorldMapTooltip:AddDoubleLine(" ", FormatTime(estTime))
 		end
 		
 		for i = 1, numRoutes do
